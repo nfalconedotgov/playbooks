@@ -2,7 +2,6 @@
 - name: Update OPNsense (minor firmware updates)
   hosts: opn
   gather_facts: false
-  become: true
 
   vars:
     backup_config: true   # grab /conf/config.xml before updating

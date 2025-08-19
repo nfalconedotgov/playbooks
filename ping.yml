@@ -1,0 +1,7 @@
+# ping.yml
+- name: Test connectivity
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Ping each host
+      ansible.builtin.ping:

@@ -1,0 +1,19 @@
+- name: Manage XCP-ng without Python (raw mode)
+  hosts: xcpng_hosts
+  gather_facts: no
+  become: true
+
+  tasks:
+    - name: Connectivity check (raw "pong")
+      ansible.builtin.raw: 'echo pong'
+      register: pong
+      changed_when: false
+
+    - name: Show pong
+      ansible.builtin.debug:
+        var: pong.stdout
+
+    - name: Update all packages (raw yum)
+      ansible.builtin.raw: 'yum -y update'
+      register: yumout
+      changed_when: "'No packages marked for update' not in yumout.stdout"

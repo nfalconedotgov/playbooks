@@ -1,0 +1,26 @@
+- name: Patch XCP-ng hypervisors (no reboot)
+  hosts: xen          # put your hypervisors in this group
+  become: true
+  gather_facts: yes
+  serial: 25%                 # update in batches; adjust if needed
+
+  vars:
+    yum_lock_timeout: 120
+    do_clean: true
+
+  tasks:
+    - name: Refresh YUM metadata
+      ansible.builtin.yum:
+        update_cache: true
+        lock_timeout: "{{ yum_lock_timeout }}"
+
+    - name: Update all packages to latest
+      ansible.builtin.yum:
+        name: "*"
+        state: latest
+        lock_timeout: "{{ yum_lock_timeout }}"
+
+    - name: Clean YUM caches
+      ansible.builtin.command: yum clean all
+      changed_when: false
+      when: do_clean

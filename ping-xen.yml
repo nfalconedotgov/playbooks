@@ -1,5 +1,5 @@
 - name: Manage XCP-ng without Python (raw mode)
-  hosts: xcpng_hosts
+  hosts: xen
   gather_facts: no
   become: true
 
@@ -12,8 +12,3 @@
     - name: Show pong
       ansible.builtin.debug:
         var: pong.stdout
-
-    - name: Update all packages (raw yum)
-      ansible.builtin.raw: 'yum -y update'
-      register: yumout
-      changed_when: "'No packages marked for update' not in yumout.stdout"

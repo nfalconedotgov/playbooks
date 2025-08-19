@@ -1,5 +1,5 @@
-- name: Manage XCP-ng without Python (raw mode)
-  hosts: xen
+- name: Ping Xen hosts with raw since no modern python
+  hosts: all
   gather_facts: no
   become: true
 

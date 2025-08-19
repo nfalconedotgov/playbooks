@@ -1,5 +1,4 @@
 - name: Patch Debian/Ubuntu hosts
-  hosts: debian_like   # or "all" if that's your group
   become: true
   gather_facts: yes
   serial: 25%          # roll through hosts in batches; adjust as you like

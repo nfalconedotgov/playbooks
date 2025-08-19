@@ -1,0 +1,64 @@
+---
+- name: Update OPNsense (minor firmware updates)
+  hosts: opn
+  gather_facts: false
+  become: true
+
+  vars:
+    backup_config: true   # grab /conf/config.xml before updating
+
+  pre_tasks:
+    - name: Show current version
+      ansible.builtin.raw: opnsense-version
+      register: v_before
+
+    - name: Print current version
+      ansible.builtin.debug:
+        msg: "{{ v_before.stdout | default('unknown') }}"
+
+    - name: Backup config.xml locally (optional)
+      when: backup_config
+      block:
+        - name: Ensure local backup dir
+          ansible.builtin.file:
+            path: "backups/opnsense/{{ inventory_hostname }}"
+            state: directory
+            mode: "0755"
+          delegate_to: localhost
+        - name: Fetch /conf/config.xml
+          ansible.builtin.fetch:
+            src: /conf/config.xml
+            dest: "backups/opnsense/{{ inventory_hostname }}/config-{{ lookup('pipe','date -u +%Y%m%dT%H%M%SZ') }}.xml"
+            flat: true
+
+  tasks:
+    - name: Refresh firmware status + changelog (no change)
+      ansible.builtin.raw: |
+        configctl firmware poll || true
+        /usr/local/opnsense/scripts/firmware/check.sh || true
+      changed_when: false
+
+    - name: Run firmware update (minor updates)
+      ansible.builtin.raw: /usr/local/opnsense/scripts/firmware/update.sh
+      register: fw_update
+
+    - name: Show first lines of update output
+      ansible.builtin.debug:
+        var: fw_update.stdout_lines[0:50]
+
+    # If the update reboots the firewall, just wait for it to come back.
+    - name: Wait for host if it rebooted
+      ansible.builtin.wait_for_connection:
+        connect_timeout: 10
+        sleep: 10
+        delay: 10
+        timeout: 900
+
+  post_tasks:
+    - name: Show new version
+      ansible.builtin.raw: opnsense-version
+      register: v_after
+
+    - name: Print new version
+      ansible.builtin.debug:
+        msg: "{{ v_after.stdout | default('unknown') }}"

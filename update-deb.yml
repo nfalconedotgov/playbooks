@@ -1,0 +1,50 @@
+- name: Patch Debian/Ubuntu hosts
+  hosts: debian_like   # or "all" if that's your group
+  become: true
+  gather_facts: yes
+  serial: 25%          # roll through hosts in batches; adjust as you like
+  vars:
+    apt_cache_valid_time: 3600
+    apt_lock_timeout: 120
+    apt_upgrade_type: full       # choices: yes|safe|full|dist (full = full-upgrade)
+    do_autoremove: true
+    do_autoclean: true
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: "{{ apt_cache_valid_time }}"
+        force_apt_get: true
+      vars:
+        ansible_command_timeout: "{{ apt_lock_timeout }}"
+
+    - name: Upgrade all packages (includes kernel/full-upgrade)
+      ansible.builtin.apt:
+        upgrade: "{{ apt_upgrade_type }}"
+        force_apt_get: true
+        lock_timeout: "{{ apt_lock_timeout }}"
+
+    - name: Autoremove old packages
+      ansible.builtin.apt:
+        autoremove: true
+        force_apt_get: true
+        lock_timeout: "{{ apt_lock_timeout }}"
+      when: do_autoremove
+
+    - name: Autoclean APT cache
+      ansible.builtin.apt:
+        autoclean: true
+        force_apt_get: true
+        lock_timeout: "{{ apt_lock_timeout }}"
+      when: do_autoclean
+
+    - name: Check if reboot is required (informational only)
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_required
+
+    - name: Show reboot requirement
+      ansible.builtin.debug:
+        msg: "Reboot is required on this host."
+      when: reboot_required.stat.exists

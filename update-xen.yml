@@ -1,26 +1,14 @@
-- name: Patch XCP-ng hypervisors (no reboot)
-  hosts: xen          # put your hypervisors in this group
+- name: Update XCP-ng hosts with raw yum
+  hosts: xen
+  gather_facts: no
   become: true
-  gather_facts: yes
-  serial: 25%                 # update in batches; adjust if needed
-
-  vars:
-    yum_lock_timeout: 120
-    do_clean: true
 
   tasks:
-    - name: Refresh YUM metadata
-      ansible.builtin.yum:
-        update_cache: true
-        lock_timeout: "{{ yum_lock_timeout }}"
+    - name: Run yum update
+      ansible.builtin.raw: "yum -y update"
+      register: yumout
+      changed_when: "'No packages marked for update' not in yumout.stdout"
 
-    - name: Update all packages to latest
-      ansible.builtin.yum:
-        name: "*"
-        state: latest
-        lock_timeout: "{{ yum_lock_timeout }}"
-
-    - name: Clean YUM caches
-      ansible.builtin.command: yum clean all
-      changed_when: false
-      when: do_clean
+    - name: Show yum output
+      ansible.builtin.debug:
+        var: yumout.stdout

@@ -1,0 +1,45 @@
+---
+- name: Update Alpine Linux hosts
+  hosts: alpine
+  become: true
+  gather_facts: false
+
+  vars:
+    clean_cache: true      # set to false to keep /var/cache/apk
+    reboot: false          # set to true to reboot after upgrade
+
+  pre_tasks:
+    - name: Ensure Python 3 is present (minimal Alpine often lacks it)
+      ansible.builtin.raw: |
+        if ! command -v python3 >/dev/null 2>&1; then
+          apk update && apk add --no-cache python3
+        fi
+      args:
+        warn: false
+
+    - name: Gather facts
+      ansible.builtin.setup:
+
+  tasks:
+    - name: Update APK index
+      community.general.apk:
+        update_cache: true
+
+    - name: Upgrade all packages to latest (world)
+      community.general.apk:
+        upgrade: true
+      register: apk_upgrade
+
+    # Optional: remove orphaned dependencies (commented out; enable if you want)
+    # - name: Remove orphaned dependencies
+    #   ansible.builtin.shell: |
+    #     set -o pipefail
+    #     orphans="$(apk info -o)" && [ -n "$orphans" ] && apk del --purge $orphans || true
+    #   args:
+    #     executable: /bin/sh
+    #   changed_when: false
+
+    - name: Clean APK cache (optional)
+      ansible.builtin.command: rm -rf /var/cache/apk/*
+      when: clean_cache
+      changed_when: false

@@ -1,4 +1,5 @@
 - name: Patch Debian/Ubuntu hosts
+  hosts: all
   become: true
   gather_facts: yes
   serial: 25%          # roll through hosts in batches; adjust as you like

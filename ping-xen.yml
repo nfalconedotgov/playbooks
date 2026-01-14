@@ -2,7 +2,7 @@
   hosts: all
   gather_facts: no
   become: true
-
+  strategy: linear
   tasks:
     - name: Connectivity check (raw "pong")
       ansible.builtin.raw: 'echo pong'

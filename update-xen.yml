@@ -2,7 +2,7 @@
   hosts: xen
   gather_facts: no
   become: true
-
+  strategy: linear
   tasks:
     - name: Run yum update
       ansible.builtin.raw: "yum -y update"
